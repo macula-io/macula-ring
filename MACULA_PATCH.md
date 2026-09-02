@@ -5,7 +5,7 @@ at version `0.17.14`, with a single patch applied so the crate's `build.rs`
 recognises bare-metal targets (`os = "none"`) and compiles its assembly
 files the same way it does for Linux / Redox / other LINUX_ABI hosts.
 
-Used by [macula-kernel](https://codeberg.org/macula-internal/macula-kernel)
+Used by [macula-kernel](https://github.com/macula-io/macula-kernel)
 via `[patch.crates-io]` to crypto-back the kernel-resident Quinn QUIC
 implementation. Upstream `ring` produces undefined-symbol link errors on
 `x86_64-unknown-none` targets because its `ASM_TARGETS` list keys on
