@@ -1,0 +1,79 @@
+name: ci
+
+# A compile, on every push to a branch and every pull request.
+#
+# THIS REPOSITORY HAD NO CI. It is a vendored fork of ring 0.17.14 with one
+# patch: `build.rs` gains `"none"` in its LINUX_ABI list, so macula-kernel can
+# build the crate's assembly for a bare-metal target (`os = "none"`), where
+# upstream ring produces undefined-symbol link errors. The whole value of the
+# fork is that this patch is still there and still compiles, and nothing checked
+# either.
+#
+# Compile only, and not `cargo test`, because the crate's suite cannot build
+# from this tree: its RSA test vectors are not tracked, so the `include_str!`
+# calls in the test modules fail. That is a fact about the vendored source, not
+# something this gate should paper over.
+#
+# `--cap-lints warn` in CI ONLY. The crate denies warnings, and current Rust
+# raises `mismatched_lifetime_syntaxes` across upstream code that predates the
+# lint, which turns 42 warnings into errors. The alternative is editing the
+# vendored source, and this fork carries one deliberate patch; it is not going
+# to carry another. Nothing in the repository changes, only what CI tolerates.
+#
+# Rust is pinned to a toolchain this crate's era builds cleanly on. Moving it is
+# a deliberate act, not something a runner image decides.
+#
+# On push and pull request, not dispatch-only: the failure mode being prevented
+# is "nobody remembered to run it", and a gate that only runs when someone
+# remembers preserves exactly that condition.
+#
+# `branches: ['**']` IS LOAD-BEARING. A `push` event fires for tag refs as well,
+# so without it this would run a second time on every release tag. `**` matches
+# every branch and excludes tags.
+
+on:
+  push:
+    branches: ['**']
+    paths-ignore: ['**.md']
+  pull_request:
+    paths-ignore: ['**.md']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  RUST_VERSION: '1.91.0'
+  # CI only: tolerate upstream warnings this crate turns into errors. See above.
+  RUSTFLAGS: '--cap-lints warn'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: build (Rust 1.91.0)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+
+      # The fork exists for this line, so the gate asserts it rather than
+      # assuming it: a bump to a newer ring that drops the patch fails here,
+      # by name, before it reaches macula-kernel's bare-metal build.
+      - name: The bare-metal patch is still there
+        run: |
+          set -uo pipefail
+          if ! awk '/^const LINUX_ABI/,/^\];/' build.rs | grep -q '"none"'; then
+            echo "build.rs: LINUX_ABI no longer lists \"none\", so this fork no longer patches bare-metal assembly" >&2
+            exit 1
+          fi
+          echo "build.rs: LINUX_ABI lists \"none\""
+
+      - name: Build
+        run: cargo build --locked
