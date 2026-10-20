@@ -24,7 +24,7 @@ experiment.
 Side Channels
 -------------
 
-See [SIDE-CHANNELS.md](SIDE-CHANNELS.md) for important information regarding
+See [SIDE-CHANNELS.md](https://github.com/briansmith/ring/blob/main/SIDE-CHANNELS.md) for important information regarding
 the limitations of the side channel mitigations in this project.
 
 
@@ -50,5 +50,5 @@ Please report bugs that aren't security vulnerabilities either as pull requests 
 Release Notes
 -------------
 It is recommended that you review every commit in this project. Some
-particularly noteworthy changes are noted in the [RELEASES.md](RELEASES.md). We could use some
+particularly noteworthy changes are noted in the [RELEASES.md](https://github.com/briansmith/ring/blob/main/RELEASES.md). We could use some
 help in making this better.
